@@ -1,0 +1,4 @@
+on:
+  schedule:
+    - cron: '15 * * * *'     # every hour at :15
+  workflow_dispatch:        # <-- this enables the “Run workflow” button
