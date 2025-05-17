@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>AQHI Live Fetch</title>
+</head>
+<body>
+  <h1>Latest AQHI</h1>
+  <button id="downloadCsv">Download CSV</button>
+  <table id="aqhiTable" border="1" style="margin-top:1em;">
+    <thead><tr><th>Station</th><th>Parameter</th><th>Value</th><th>Time</th></tr></thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const API = 'https://data.environment.alberta.ca/EdwServices/aqhi/odata/StationMeasurements?$format=json&$filter=ReadingDate ge datetime\'' + 
+                new Date(Date.now() - 60*60*1000).toISOString() + // last hour
+                '\'&$select=StationName,ParameterName,ReadingDate,Value';
+
+    async function fetchAQHI() {
+      const res = await fetch(API);
+      const json = await res.json();
+      return json.value || [];
+    }
+
+    function renderTable(data) {
+      const tbody = document.querySelector('#aqhiTable tbody');
+      tbody.innerHTML = '';
+      data.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row.StationName}</td>
+          <td>${row.ParameterName}</td>
+          <td>${row.Value}</td>
+          <td>${new Date(row.ReadingDate).toLocaleString()}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function toCsv(data) {
+      const header = ['StationName','ParameterName','Value','ReadingDate'];
+      const lines = data.map(r =>
+        [r.StationName, r.ParameterName, r.Value, r.ReadingDate]
+          .map(f => `"${String(f).replace(/"/g,'""')}"`)
+          .join(',')
+      );
+      return [header.join(','), ...lines].join('\r\n');
+    }
+
+    document.getElementById('downloadCsv').addEventListener('click', async () => {
+      const data = await fetchAQHI();
+      const csv  = toCsv(data);
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = 'aqhi_latest.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // On page load, fetch & display
+    fetchAQHI().then(renderTable);
+  </script>
+</body>
+</html>
