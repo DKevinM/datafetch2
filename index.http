@@ -1,0 +1,31 @@
+# 1) Your station list
+stations <- data.frame(
+  StationName = c(
+    "Edmonton McCauley","St. Albert","Woodcroft","Edmonton East","Edmonton Lendrum",
+    "Ardrossan","Sherwood Park","O’Morrow Station 1","Poacher’s Landing Station 2","Leduc Sensor",
+    "Breton","Carrot Creek","Drayton Valley","Edson","Genesee","Hinton-Drinnan","Meadows",
+    "Powers","Steeper","Wagner2","Hinton-Hillcrest","Jasper","Enoch"
+  ),
+  stringsAsFactors = FALSE
+)
+
+# 2) Template header (for VS Code REST Client)
+header <- c(
+  "# ▶️ Run this with the VS Code REST Client extension",
+  "@base  = https://data.environment.alberta.ca/EdwServices/aqhi/odata",
+  "@7days = {{date:now:-7d:yyyy-MM-dd'T'HH:mm:sszzz}}", 
+  "",
+  "### 7-day StationMeasurements for each station…",
+  ""
+)
+
+# 3) Generate one GET per station
+body <- vapply(stations$StationName, function(st) {
+  sprintf(
+    "GET {{base}}/StationMeasurements?$format=json&$filter=StationName eq '%s' and ReadingDate gt {{7days}}&$orderby=ReadingDate desc&$select=StationName,ParameterName,ReadingDate,Value",
+    URLencode(st, reserved = TRUE)
+  )
+}, character(1), USE.NAMES = FALSE)
+
+# 4) Write out index.http
+writeLines(c(header, body), "index.http")
