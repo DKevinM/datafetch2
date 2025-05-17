@@ -1,0 +1,10 @@
+{
+  "name": "datafetch",
+  "version": "1.0.0",
+  "dependencies": {
+    "axios": "^1.0.0"
+  },
+  "scripts": {
+    "fetch": "node datafetch/fetchAQHI.js"
+  }
+}
